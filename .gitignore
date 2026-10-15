@@ -1,0 +1,9 @@
+node_modules
+dist
+.env
+.expo
+*.log
+**/src/generated/
+
+# Grant application materials: personal data (CVs) and private documents
+docs/application/

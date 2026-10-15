@@ -1,0 +1,15 @@
+{
+  "expo": {
+    "name": "Magani",
+    "slug": "magani",
+    "scheme": "magani",
+    "version": "0.1.0",
+    "orientation": "portrait",
+    "userInterfaceStyle": "light",
+    "backgroundColor": "#F5F7F4",
+    "splash": { "backgroundColor": "#17324D" },
+    "android": { "package": "ng.magani.app", "adaptiveIcon": { "backgroundColor": "#17324D" } },
+    "ios": { "bundleIdentifier": "ng.magani.app" },
+    "plugins": ["expo-router", "expo-secure-store", "expo-font"]
+  }
+}

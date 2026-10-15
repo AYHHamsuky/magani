@@ -1,0 +1,21 @@
+{
+  "name": "magani",
+  "private": true,
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
+  "scripts": {
+    "dev:api": "npm run dev -w @magani/api",
+    "dev:web": "npm run dev -w @magani/web",
+    "dev:mobile": "npm run start -w @magani/mobile",
+    "db:up": "docker compose up -d db",
+    "db:migrate": "npm run migrate -w @magani/api",
+    "db:seed": "npm run seed -w @magani/api",
+    "typecheck": "npm run typecheck -w @magani/shared -w @magani/api -w @magani/web",
+    "dev:carebridge-api": "npm run dev -w @carebridge/api",
+    "dev:carebridge": "npm run dev -w @carebridge/web",
+    "carebridge:migrate": "npm run migrate -w @carebridge/api",
+    "carebridge:seed": "npm run seed -w @carebridge/api"
+  }
+}

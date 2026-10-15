@@ -1,0 +1,284 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum OutletType {
+  PHARMACY
+  PPMV
+}
+
+enum Role {
+  OWNER
+  STAFF
+}
+
+enum DosageForm {
+  TABLET
+  CAPSULE
+  SYRUP
+  INJECTION
+  CREAM
+  OTHER
+}
+
+enum MovementType {
+  RECEIVE
+  SALE
+  ADJUST
+}
+
+enum Language {
+  HAUSA
+  ENGLISH
+}
+
+enum Programme {
+  HYPERTENSION
+  DIABETES
+  OTHER
+}
+
+enum ReminderStatus {
+  SENT
+  FAILED
+}
+
+model Pharmacy {
+  id         String          @id @default(uuid())
+  name       String
+  outletType OutletType
+  state      String
+  lga        String
+  createdAt  DateTime        @default(now())
+  users      User[]
+  products   Product[]
+  patients   Patient[]
+  sales      Sale[]
+  movements  StockMovement[]
+  /// Opt-in: listed to partners (hospitals, CareBridge) and can receive prescription orders.
+  acceptsOrders Boolean        @default(false)
+  orders        MedicineOrder[]
+}
+
+model User {
+  id           String   @id @default(uuid())
+  pharmacyId   String
+  pharmacy     Pharmacy @relation(fields: [pharmacyId], references: [id])
+  name         String
+  phone        String   @unique
+  passwordHash String
+  role         Role     @default(STAFF)
+  createdAt    DateTime @default(now())
+}
+
+model Product {
+  id           String          @id @default(uuid())
+  pharmacyId   String
+  pharmacy     Pharmacy        @relation(fields: [pharmacyId], references: [id])
+  name         String
+  genericName  String?
+  strength     String?
+  form         DosageForm      @default(TABLET)
+  packSize     Int             @default(1)
+  priceKobo    Int
+  reorderLevel Int             @default(10)
+  isNcd        Boolean         @default(false)
+  barcode      String?
+  createdAt    DateTime        @default(now())
+  batches      Batch[]
+  movements    StockMovement[]
+  saleItems    SaleItem[]
+  refillPlans  RefillPlan[]
+  orderItems   MedicineOrderItem[]
+
+  @@index([pharmacyId])
+}
+
+model Batch {
+  id        String          @id @default(uuid())
+  productId String
+  product   Product         @relation(fields: [productId], references: [id])
+  batchNo   String
+  expiry    DateTime
+  quantity  Int
+  costKobo  Int             @default(0)
+  createdAt DateTime        @default(now())
+  movements StockMovement[]
+
+  @@unique([productId, batchNo])
+  @@index([expiry])
+}
+
+model StockMovement {
+  id         String       @id @default(uuid())
+  pharmacyId String
+  pharmacy   Pharmacy     @relation(fields: [pharmacyId], references: [id])
+  productId  String
+  product    Product      @relation(fields: [productId], references: [id])
+  batchId    String?
+  batch      Batch?       @relation(fields: [batchId], references: [id])
+  saleId     String?
+  sale       Sale?        @relation(fields: [saleId], references: [id])
+  type       MovementType
+  quantity   Int
+  note       String?
+  userId     String
+  createdAt  DateTime     @default(now())
+
+  @@index([pharmacyId, type, createdAt])
+}
+
+model Sale {
+  id         String          @id @default(uuid())
+  pharmacyId String
+  pharmacy   Pharmacy        @relation(fields: [pharmacyId], references: [id])
+  userId     String
+  patientId  String?
+  patient    Patient?        @relation(fields: [patientId], references: [id])
+  totalKobo  Int
+  soldAt     DateTime        @default(now())
+  items      SaleItem[]
+  movements  StockMovement[]
+  order      MedicineOrder?
+
+  @@index([pharmacyId, soldAt])
+}
+
+model SaleItem {
+  id        String  @id @default(uuid())
+  saleId    String
+  sale      Sale    @relation(fields: [saleId], references: [id])
+  productId String
+  product   Product @relation(fields: [productId], references: [id])
+  quantity  Int
+  priceKobo Int
+}
+
+model Patient {
+  id          String       @id @default(uuid())
+  pharmacyId  String
+  pharmacy    Pharmacy     @relation(fields: [pharmacyId], references: [id])
+  name        String
+  phone       String
+  language    Language     @default(HAUSA)
+  programme   Programme
+  consentAt   DateTime
+  createdAt   DateTime     @default(now())
+  refillPlans RefillPlan[]
+  sales       Sale[]
+
+  @@index([pharmacyId])
+}
+
+model RefillPlan {
+  id                String     @id @default(uuid())
+  patientId         String
+  patient           Patient    @relation(fields: [patientId], references: [id])
+  productId         String
+  product           Product    @relation(fields: [productId], references: [id])
+  quantityPerRefill Int
+  intervalDays      Int
+  nextDueDate       DateTime
+  active            Boolean    @default(true)
+  reminders         Reminder[]
+
+  @@index([nextDueDate])
+}
+
+model Reminder {
+  id           String         @id @default(uuid())
+  refillPlanId String
+  refillPlan   RefillPlan     @relation(fields: [refillPlanId], references: [id])
+  dueDate      DateTime
+  sentAt       DateTime       @default(now())
+  status       ReminderStatus
+  message      String
+  error        String?
+
+  @@unique([refillPlanId, dueDate])
+}
+
+enum PartnerKind {
+  HOSPITAL
+  PLATFORM
+}
+
+/// An organisation that sends prescription orders through the partner API.
+model Partner {
+  id            String          @id @default(uuid())
+  name          String
+  kind          PartnerKind
+  keyPrefix     String
+  keyHash       String          @unique
+  webhookUrl    String?
+  webhookSecret String
+  active        Boolean         @default(true)
+  createdAt     DateTime        @default(now())
+  orders        MedicineOrder[]
+}
+
+enum OrderStatus {
+  SENT
+  ACCEPTED
+  READY
+  DISPENSED
+  DECLINED
+  CANCELLED
+}
+
+enum Fulfilment {
+  PICKUP
+  DELIVERY
+}
+
+enum OrderPayer {
+  PARTNER
+  PATIENT
+}
+
+model MedicineOrder {
+  id              String              @id @default(uuid())
+  partnerId       String
+  partner         Partner             @relation(fields: [partnerId], references: [id])
+  pharmacyId      String
+  pharmacy        Pharmacy            @relation(fields: [pharmacyId], references: [id])
+  /// The partner's own reference for this order; unique per partner so retries are safe.
+  externalRef     String
+  patientName     String
+  patientPhone    String
+  prescriber      String?
+  fulfilment      Fulfilment          @default(PICKUP)
+  deliveryAddress String?
+  payer           OrderPayer          @default(PARTNER)
+  note            String?
+  status          OrderStatus         @default(SENT)
+  declineReason   String?
+  totalKobo       Int?
+  saleId          String?             @unique
+  sale            Sale?               @relation(fields: [saleId], references: [id])
+  createdAt       DateTime            @default(now())
+  updatedAt       DateTime            @updatedAt
+  dispensedAt     DateTime?
+  items           MedicineOrderItem[]
+
+  @@unique([partnerId, externalRef])
+  @@index([pharmacyId, status])
+}
+
+model MedicineOrderItem {
+  id           String        @id @default(uuid())
+  orderId      String
+  order        MedicineOrder @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  medicine     String
+  strength     String?
+  quantity     Int
+  instructions String?
+  /// Set by the pharmacy when it accepts the order.
+  productId    String?
+  product      Product?      @relation(fields: [productId], references: [id])
+}

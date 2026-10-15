@@ -1,0 +1,17 @@
+{
+  "name": "@magani/ui",
+  "version": "0.1.0",
+  "private": true,
+  "main": "src/index.ts",
+  "types": "src/index.ts",
+  "exports": {
+    ".": "./src/index.ts",
+    "./icons": "./src/icons.tsx",
+    "./styles.css": "./src/styles/magani.css",
+    "./extras.css": "./src/styles/extras.css",
+    "./landing.css": "./src/styles/landing.css"
+  },
+  "scripts": {
+    "typecheck": "tsc --noEmit"
+  }
+}

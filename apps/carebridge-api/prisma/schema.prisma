@@ -1,0 +1,189 @@
+generator client {
+  provider = "prisma-client-js"
+  // Own output so it never collides with Magani's client in the shared node_modules.
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Role {
+  ADMIN
+  OFFICER
+}
+
+enum HospitalType {
+  FEDERAL_TEACHING
+  FEDERAL_MEDICAL_CENTRE
+  STATE_SPECIALIST
+  GENERAL
+  PRIMARY_HEALTH
+}
+
+model Hospital {
+  id            String         @id @default(uuid())
+  name          String
+  type          HospitalType
+  state         String
+  lga           String
+  address       String?
+  phone         String?
+  specialties   String[]
+  verified      Boolean        @default(false)
+  createdAt     DateTime       @default(now())
+  officers      User[]
+  campaigns     Campaign[]
+  disbursements Disbursement[]
+
+  @@index([state, lga])
+}
+
+/// Platform admins and hospital officers (social workers, medical records officers).
+model User {
+  id           String          @id @default(uuid())
+  name         String
+  email        String          @unique
+  phone        String?
+  jobTitle     String?
+  passwordHash String
+  role         Role            @default(OFFICER)
+  approved     Boolean         @default(false)
+  hospitalId   String?
+  hospital     Hospital?       @relation(fields: [hospitalId], references: [id])
+  createdAt    DateTime        @default(now())
+  campaigns    Campaign[]
+  orders       MedicineOrder[]
+}
+
+enum CampaignStatus {
+  PENDING_REVIEW
+  LIVE
+  FUNDED
+  CLOSED
+  REJECTED
+}
+
+enum Category {
+  NCD_MEDICATION
+  DIALYSIS
+  CANCER
+  SURGERY
+  MATERNAL_CHILD
+  EMERGENCY
+  OTHER
+}
+
+model Campaign {
+  id             String          @id @default(uuid())
+  slug           String          @unique
+  hospitalId     String
+  hospital       Hospital        @relation(fields: [hospitalId], references: [id])
+  createdById    String
+  createdBy      User            @relation(fields: [createdById], references: [id])
+  title          String
+  /// Public name only, e.g. "Aisha, 54". The full name never leaves the console.
+  patientAlias   String
+  story          String
+  category       Category
+  /// Private: hospital case or admission number, checked by the reviewer.
+  caseReference  String
+  patientName    String
+  patientPhone   String
+  consentAt      DateTime
+  targetKobo     Int
+  status         CampaignStatus  @default(PENDING_REVIEW)
+  reviewNote     String?
+  createdAt      DateTime        @default(now())
+  liveAt         DateTime?
+  items          CostItem[]
+  donations      Donation[]
+  disbursements  Disbursement[]
+  medicineOrders MedicineOrder[]
+}
+
+model CostItem {
+  id          String   @id @default(uuid())
+  campaignId  String
+  campaign    Campaign @relation(fields: [campaignId], references: [id], onDelete: Cascade)
+  description String
+  amountKobo  Int
+}
+
+enum DonationStatus {
+  PENDING
+  PAID
+  FAILED
+}
+
+/// A donation to a campaign, or to the Essential Medicine Fund when campaignId is null.
+model Donation {
+  id         String         @id @default(uuid())
+  campaignId String?
+  campaign   Campaign?      @relation(fields: [campaignId], references: [id])
+  donorName  String
+  donorEmail String
+  anonymous  Boolean        @default(false)
+  message    String?
+  amountKobo Int
+  status     DonationStatus @default(PENDING)
+  reference  String         @unique
+  provider   String
+  createdAt  DateTime       @default(now())
+  paidAt     DateTime?
+}
+
+enum PayeeType {
+  HOSPITAL
+  PHARMACY
+}
+
+enum DisbursementStatus {
+  DUE
+  PAID
+}
+
+/// Money committed to a hospital or pharmacy. Never to the patient's own account.
+model Disbursement {
+  id              String             @id @default(uuid())
+  campaignId      String?
+  campaign        Campaign?          @relation(fields: [campaignId], references: [id])
+  payeeType       PayeeType
+  hospitalId      String?
+  hospital        Hospital?          @relation(fields: [hospitalId], references: [id])
+  payeeName       String
+  amountKobo      Int
+  purpose         String
+  evidence        String?
+  status          DisbursementStatus @default(DUE)
+  medicineOrderId String?            @unique
+  medicineOrder   MedicineOrder?     @relation(fields: [medicineOrderId], references: [id])
+  createdAt       DateTime           @default(now())
+  paidAt          DateTime?
+}
+
+/// Mirror of an order placed with a Magani pharmacy through the partner API.
+model MedicineOrder {
+  id               String        @id @default(uuid())
+  campaignId       String?
+  campaign         Campaign?     @relation(fields: [campaignId], references: [id])
+  maganiOrderId    String?       @unique
+  pharmacyId       String
+  pharmacyName     String
+  pharmacyLocation String
+  patientName      String
+  patientPhone     String
+  fulfilment       String
+  deliveryAddress  String?
+  items            Json
+  status           String        @default("SENT")
+  totalKobo        Int?
+  declineReason    String?
+  createdById      String
+  createdBy        User          @relation(fields: [createdById], references: [id])
+  createdAt        DateTime      @default(now())
+  updatedAt        DateTime      @updatedAt
+  dispensedAt      DateTime?
+  disbursement     Disbursement?
+}

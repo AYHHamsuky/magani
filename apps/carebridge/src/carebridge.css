@@ -1,0 +1,67 @@
+/* CareBridge additions on top of the shared Magani design system. */
+.cb-progress { height: 8px; border-radius: 999px; background: var(--muted); overflow: hidden; }
+.cb-progress > span { display: block; height: 100%; border-radius: inherit; background: var(--primary); transition: width .4s ease; }
+
+.cb-card { text-decoration: none; color: inherit; transition: box-shadow .15s, transform .15s; }
+.cb-card:hover { box-shadow: var(--shadow), 0 8px 24px oklch(30.8% .057 248 / .08); transform: translateY(-1px); }
+.cb-card h3 { font-family: var(--font-heading); font-size: 18px; line-height: 1.25; }
+.cb-card-hospital { display: flex; align-items: center; gap: 6px; color: var(--muted-foreground); font-size: 13px; }
+
+.cb-verified { display: inline-flex; align-items: center; gap: 4px; color: var(--primary); font-size: 12px; font-weight: 700; }
+.cb-nav-active { color: var(--foreground) !important; font-weight: 700; }
+
+.cb-page { padding: 48px max(24px, calc((100vw - 1180px) / 2)) 24px; }
+.cb-detail { display: grid; grid-template-columns: minmax(0, 1fr) 360px; gap: 40px; align-items: start; }
+.cb-panel { background: var(--card); border: 1px solid var(--border); border-radius: 10px; padding: 24px; }
+.cb-panel h2 { font-family: var(--font-heading); font-size: 20px; margin-bottom: 12px; }
+.cb-sticky { position: sticky; top: 90px; display: grid; gap: 14px; }
+.cb-big-number { font-family: var(--font-heading); font-size: 32px; font-weight: 700; line-height: 1; }
+.cb-story { white-space: pre-line; line-height: 1.7; font-size: 16px; }
+
+.cb-timeline { display: grid; gap: 0; }
+.cb-timeline li { display: grid; grid-template-columns: 14px minmax(0, 1fr); gap: 14px; padding-bottom: 18px; position: relative; }
+.cb-timeline li::before { content: ""; width: 10px; height: 10px; border-radius: 999px; background: var(--primary); margin-top: 6px; }
+.cb-timeline li::after { content: ""; position: absolute; left: 4.5px; top: 18px; bottom: 0; width: 1px; background: var(--border); }
+.cb-timeline li:last-child::after { display: none; }
+.cb-timeline small { display: block; color: var(--muted-foreground); font-size: 12px; margin-top: 2px; }
+
+.cb-cost { width: 100%; font-size: 14px; }
+.cb-cost td { padding: 8px 0; border-bottom: 1px solid var(--border); }
+.cb-cost td:last-child { text-align: right; font-weight: 700; white-space: nowrap; }
+
+.cb-amounts { display: flex; flex-wrap: wrap; gap: 8px; }
+.cb-amounts button[aria-pressed="true"] { border-color: var(--primary); background: var(--accent); }
+
+.cb-items-row { display: grid; grid-template-columns: minmax(0, 2fr) minmax(0, 1fr) 80px 36px; gap: 8px; align-items: end; }
+.cb-cost-row { display: grid; grid-template-columns: minmax(0, 1fr) 140px 36px; gap: 8px; align-items: end; }
+
+.cb-filters { display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 24px; }
+.cb-filters select, .cb-filters input { max-width: 240px; }
+
+@media (width <= 900px) {
+  .cb-detail { grid-template-columns: minmax(0, 1fr); }
+  .cb-sticky { position: static; }
+}
+@media (width <= 560px) {
+  .cb-page { padding: 28px 16px 16px; }
+  .cb-items-row { grid-template-columns: minmax(0, 1fr) 70px 36px; }
+  .cb-items-row > :nth-child(2) { display: none; }
+}
+
+textarea {
+  width: 100%;
+  border: 1px solid var(--border);
+  background: var(--card);
+  color: var(--foreground);
+  border-radius: 5px;
+  padding: 9px 12px;
+  font: inherit;
+  line-height: 1.5;
+  resize: vertical;
+}
+textarea:focus { outline: 2px solid var(--primary); outline-offset: 1px; }
+
+@media (width <= 560px) {
+  .cb-hide-sm { display: none; }
+  .landing-nav .brand { font-size: 22px; }
+}

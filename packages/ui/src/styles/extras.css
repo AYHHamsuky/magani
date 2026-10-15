@@ -1,0 +1,62 @@
+/* magani.css is the design's compiled stylesheet. These rules cover the two pieces it
+   expected from libraries: the native <dialog> and the toast stack. */
+
+dialog.modal {
+  position: fixed;
+  inset: 0;
+  margin: auto;
+  height: fit-content;
+  color: var(--foreground);
+}
+dialog.modal:not([open]) {
+  display: none;
+}
+dialog.modal::backdrop {
+  background: rgb(0 0 0 / 0.8);
+}
+dialog.modal[open] {
+  animation: modal-in 150ms ease-out;
+}
+@keyframes modal-in {
+  from { opacity: 0; transform: scale(0.95); }
+}
+
+.toaster {
+  position: fixed;
+  right: 24px;
+  bottom: 24px;
+  z-index: 100;
+  display: grid;
+  gap: 8px;
+  width: min(356px, calc(100vw - 32px));
+}
+.toast {
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--background);
+  padding: 14px 16px;
+  font-size: 13px;
+  box-shadow: 0 4px 12px rgb(0 0 0 / 0.1);
+  animation: toast-in 200ms ease-out;
+}
+.toast.success { background: hsl(143 85% 96%); border-color: hsl(145 92% 87%); color: hsl(140 100% 27%); }
+.toast.error { background: hsl(359 100% 97%); border-color: hsl(359 100% 94%); color: hsl(360 100% 45%); }
+.toast.info { background: hsl(208 100% 97%); border-color: hsl(221 91% 93%); color: hsl(210 92% 45%); }
+@keyframes toast-in {
+  from { opacity: 0; transform: translateY(8px); }
+}
+@media (prefers-reduced-motion: reduce) {
+  dialog.modal[open], .toast { animation: none; }
+}
+
+/* The design's one-column grid used 1fr, which cannot shrink below the stock table's
+   width and pushed phone layouts to ~600px wide. Let tables scroll inside .table-wrap. */
+@media (width <= 850px) {
+  .work-grid, .sell-layout { grid-template-columns: minmax(0, 1fr); }
+}
+@media (width <= 600px) {
+  .product-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .product-card { min-width: 0; }
+  .product-card h3 { overflow-wrap: anywhere; }
+  .product-card .cover-cell { flex-wrap: wrap; }
+}
